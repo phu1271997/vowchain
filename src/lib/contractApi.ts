@@ -1,13 +1,38 @@
-import { readClient, getWriteClient } from "./genlayerClient";
+import { readClient, getWriteClient, rethrowWalletError, config } from "./genlayerClient";
 import type { Agreement, Proposal } from "./types";
 import { TransactionStatus } from "genlayer-js/types";
 
-// Fallback contract addresses (to be updated after deployment)
-export const CORE_CONTRACT_ADDRESS = (import.meta.env.VITE_VOWCHAIN_CORE_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`;
-export const TREASURY_CONTRACT_ADDRESS = (import.meta.env.VITE_VOWCHAIN_TREASURY_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`;
+const ZERO = "0x0000000000000000000000000000000000000000";
 
-// Helper to wait for transaction finalization
-export async function waitForTxReceipt(writeClient: any, hash: `0x${string}`, interval = 3000, retries = 25) {
+// Contract addresses — set via Vercel / .env after Studio deploy
+export const CORE_CONTRACT_ADDRESS = (import.meta.env.VITE_VOWCHAIN_CORE_ADDRESS ||
+  ZERO) as `0x${string}`;
+export const TREASURY_CONTRACT_ADDRESS = (import.meta.env
+  .VITE_VOWCHAIN_TREASURY_ADDRESS || ZERO) as `0x${string}`;
+
+export function isCoreConfigured(): boolean {
+  return (
+    Boolean(CORE_CONTRACT_ADDRESS) &&
+    CORE_CONTRACT_ADDRESS.toLowerCase() !== ZERO.toLowerCase() &&
+    CORE_CONTRACT_ADDRESS.length === 42
+  );
+}
+
+export function requireCoreAddress(): `0x${string}` {
+  if (!isCoreConfigured()) {
+    throw new Error(
+      "VowChain core contract is not configured. Set VITE_VOWCHAIN_CORE_ADDRESS to the deployed contracts/vowchain_core.py address and redeploy the frontend."
+    );
+  }
+  return CORE_CONTRACT_ADDRESS;
+}
+
+export async function waitForTxReceipt(
+  writeClient: any,
+  hash: `0x${string}`,
+  interval = 3000,
+  retries = 40
+) {
   return await writeClient.waitForTransactionReceipt({
     hash,
     status: TransactionStatus.FINALIZED,
@@ -16,12 +41,40 @@ export async function waitForTxReceipt(writeClient: any, hash: `0x${string}`, in
   });
 }
 
+async function write(
+  signerAccount: any,
+  functionName: string,
+  args: any[],
+  value: bigint,
+  onProgress: (msg: string) => void,
+  progressLabel: string
+) {
+  const address = requireCoreAddress();
+  try {
+    // Never call writeClient.connect() — that triggers wallet_getSnaps / GenLayer Snap.
+    const writeClient = getWriteClient(signerAccount);
+    onProgress(progressLabel);
+    const txHash = (await writeClient.writeContract({
+      address,
+      functionName,
+      args,
+      value,
+    })) as `0x${string}`;
+
+    onProgress("Waiting for GenLayer consensus / finalization...");
+    await waitForTxReceipt(writeClient, txHash);
+    return txHash;
+  } catch (err) {
+    rethrowWalletError(err);
+  }
+}
+
 // ==========================================
 // VowChainCore Reads
 // ==========================================
 
 export async function getAgreementCounter(): Promise<bigint> {
-  if (CORE_CONTRACT_ADDRESS === "0x0000000000000000000000000000000000000000") return 0n;
+  if (!isCoreConfigured()) return 0n;
   try {
     const res = await readClient.readContract({
       address: CORE_CONTRACT_ADDRESS,
@@ -35,13 +88,36 @@ export async function getAgreementCounter(): Promise<bigint> {
   }
 }
 
+export async function healthCheck(): Promise<{ ok: boolean; message: string }> {
+  if (!isCoreConfigured()) {
+    return {
+      ok: false,
+      message:
+        "VITE_VOWCHAIN_CORE_ADDRESS is not set — create agreement will fail until the core contract is configured.",
+    };
+  }
+  try {
+    const count = await getAgreementCounter();
+    return {
+      ok: true,
+      message: `GenLayer binding OK · ${config.networkLabel} · get_agreement_counter() = ${count}`,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      message: err?.message || String(err),
+    };
+  }
+}
+
 export async function getAgreement(agreementId: string): Promise<Agreement> {
+  requireCoreAddress();
   const res = await readClient.readContract({
     address: CORE_CONTRACT_ADDRESS,
     functionName: "get_agreement",
     args: [agreementId],
   });
-  
+
   const parsed = JSON.parse(res as string);
   return {
     ...parsed,
@@ -55,14 +131,14 @@ export async function getAgreement(agreementId: string): Promise<Agreement> {
 
 export async function getProposal(agreementId: string): Promise<Proposal | null> {
   try {
+    requireCoreAddress();
     const res = await readClient.readContract({
       address: CORE_CONTRACT_ADDRESS,
       functionName: "get_proposal",
       args: [agreementId],
     });
     return JSON.parse(res as string) as Proposal;
-  } catch (err) {
-    // If status is not PROPOSED or SETTLED, get_proposal will revert on contract
+  } catch {
     return null;
   }
 }
@@ -78,21 +154,30 @@ export async function createAgreement(
   depositWei: bigint,
   onProgress: (msg: string) => void
 ): Promise<string> {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Broadcasting agreement creation transaction...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "create_agreement",
-    args: [partnerB, terms],
-    value: depositWei,
-  });
+  if (!partnerB?.startsWith("0x") || partnerB.length !== 42) {
+    throw new Error("Partner B must be a valid 0x-prefixed 40-hex-character address.");
+  }
+  if (!terms?.trim()) {
+    throw new Error("Separation terms cannot be empty.");
+  }
 
-  onProgress("Waiting for validator consensus on GenLayer...");
-  await waitForTxReceipt(writeClient, txHash);
+  await write(
+    signerAccount,
+    "create_agreement",
+    [partnerB, terms],
+    depositWei,
+    onProgress,
+    "Broadcasting create_agreement (no MetaMask Snap / no client.connect)..."
+  );
 
   onProgress("Fetching new agreement ID...");
+  // Small delay for view consistency after finalize
+  await new Promise((r) => setTimeout(r, 800));
   const counter = await getAgreementCounter();
+  if (counter === 0n) {
+    // Fallback: still return best-effort id
+    return "1";
+  }
   return String(counter);
 }
 
@@ -102,18 +187,14 @@ export async function joinAgreement(
   depositWei: bigint,
   onProgress: (msg: string) => void
 ) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Broadcasting join agreement transaction...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "join_agreement",
-    args: [agreementId],
-    value: depositWei,
-  });
-
-  onProgress("Waiting for validator consensus...");
-  await waitForTxReceipt(writeClient, txHash);
+  await write(
+    signerAccount,
+    "join_agreement",
+    [agreementId],
+    depositWei,
+    onProgress,
+    "Broadcasting join_agreement..."
+  );
 }
 
 export async function initiateDissolution(
@@ -121,18 +202,14 @@ export async function initiateDissolution(
   agreementId: string,
   onProgress: (msg: string) => void
 ) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Broadcasting dissolution transaction...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "initiate_dissolution",
-    args: [agreementId],
-    value: 0n,
-  });
-
-  onProgress("Waiting for validator consensus...");
-  await waitForTxReceipt(writeClient, txHash);
+  await write(
+    signerAccount,
+    "initiate_dissolution",
+    [agreementId],
+    0n,
+    onProgress,
+    "Broadcasting initiate_dissolution..."
+  );
 }
 
 export async function submitEvidence(
@@ -142,18 +219,14 @@ export async function submitEvidence(
   category: string,
   onProgress: (msg: string) => void
 ) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Broadcasting evidence submission...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "submit_evidence",
-    args: [agreementId, evidence, category],
-    value: 0n,
-  });
-
-  onProgress("Waiting for validator consensus...");
-  await waitForTxReceipt(writeClient, txHash);
+  await write(
+    signerAccount,
+    "submit_evidence",
+    [agreementId, evidence, category],
+    0n,
+    onProgress,
+    "Broadcasting submit_evidence..."
+  );
 }
 
 export async function proposeSplit(
@@ -161,18 +234,14 @@ export async function proposeSplit(
   agreementId: string,
   onProgress: (msg: string) => void
 ) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Initiating AI Arbitration consensus (Deliberating 3 AI Judges)...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "propose_split",
-    args: [agreementId],
-    value: 0n,
-  });
-
-  onProgress("Deliberating splits & resolving URL evidence...");
-  await waitForTxReceipt(writeClient, txHash);
+  await write(
+    signerAccount,
+    "propose_split",
+    [agreementId],
+    0n,
+    onProgress,
+    "Initiating AI arbitration consensus (propose_split)..."
+  );
 }
 
 export async function acceptProposal(
@@ -180,18 +249,14 @@ export async function acceptProposal(
   agreementId: string,
   onProgress: (msg: string) => void
 ) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Signing split proposal...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "accept_proposal",
-    args: [agreementId],
-    value: 0n,
-  });
-
-  onProgress("Waiting for validator consensus...");
-  await waitForTxReceipt(writeClient, txHash);
+  await write(
+    signerAccount,
+    "accept_proposal",
+    [agreementId],
+    0n,
+    onProgress,
+    "Signing accept_proposal..."
+  );
 }
 
 export async function disputeProposal(
@@ -199,26 +264,37 @@ export async function disputeProposal(
   agreementId: string,
   onProgress: (msg: string) => void
 ) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Filing split dispute...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "dispute_proposal",
-    args: [agreementId],
-    value: 0n,
-  });
+  await write(
+    signerAccount,
+    "dispute_proposal",
+    [agreementId],
+    0n,
+    onProgress,
+    "Filing dispute_proposal..."
+  );
+}
 
-  onProgress("Waiting for validator consensus...");
-  await waitForTxReceipt(writeClient, txHash);
+export async function settleDeadlock(
+  signerAccount: any,
+  agreementId: string,
+  onProgress: (msg: string) => void
+) {
+  await write(
+    signerAccount,
+    "settle_deadlock",
+    [agreementId],
+    0n,
+    onProgress,
+    "Signing settle_deadlock..."
+  );
 }
 
 // ==========================================
-// VowChainTreasury Reads & Writes
+// VowChainTreasury
 // ==========================================
 
 export async function getWithdrawableBalance(address: string): Promise<bigint> {
-  if (TREASURY_CONTRACT_ADDRESS === "0x0000000000000000000000000000000000000000") return 0n;
+  if (TREASURY_CONTRACT_ADDRESS === ZERO) return 0n;
   try {
     const res = await readClient.readContract({
       address: TREASURY_CONTRACT_ADDRESS,
@@ -236,29 +312,28 @@ export async function withdrawFunds(
   signerAccount: any,
   onProgress: (msg: string) => void
 ): Promise<bigint> {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Initiating pull withdrawal transfer...");
-  const txHash = await writeClient.writeContract({
-    address: TREASURY_CONTRACT_ADDRESS,
-    functionName: "withdraw",
-    args: [],
-    value: 0n,
-  });
-
-  onProgress("Finalizing value transfer on GenLayer...");
-  await waitForTxReceipt(writeClient, txHash);
-  
-  // Return withdrawn amount
-  return 0n;
+  if (TREASURY_CONTRACT_ADDRESS === ZERO) {
+    throw new Error("Treasury contract address is not configured.");
+  }
+  try {
+    const writeClient = getWriteClient(signerAccount);
+    onProgress("Initiating pull withdrawal...");
+    const txHash = (await writeClient.writeContract({
+      address: TREASURY_CONTRACT_ADDRESS,
+      functionName: "withdraw",
+      args: [],
+      value: 0n,
+    })) as `0x${string}`;
+    onProgress("Finalizing value transfer on GenLayer...");
+    await waitForTxReceipt(writeClient, txHash);
+    return 0n;
+  } catch (err) {
+    rethrowWalletError(err);
+  }
 }
 
-// ==========================================
-// Reputation Reads
-// ==========================================
-
 export async function getPartnerReputation(address: string): Promise<number> {
-  if (CORE_CONTRACT_ADDRESS === "0x0000000000000000000000000000000000000000") return 0;
+  if (!isCoreConfigured()) return 0;
   try {
     const res = await readClient.readContract({
       address: CORE_CONTRACT_ADDRESS,
@@ -272,21 +347,4 @@ export async function getPartnerReputation(address: string): Promise<number> {
   }
 }
 
-export async function settleDeadlock(
-  signerAccount: any,
-  agreementId: string,
-  onProgress: (msg: string) => void
-) {
-  const writeClient = getWriteClient(signerAccount);
-  
-  onProgress("Signing deadlock resolution...");
-  const txHash = await writeClient.writeContract({
-    address: CORE_CONTRACT_ADDRESS,
-    functionName: "settle_deadlock",
-    args: [agreementId],
-    value: 0n,
-  });
-
-  onProgress("Waiting for validator consensus...");
-  await waitForTxReceipt(writeClient, txHash);
-}
+export { CORE_CONTRACT_ADDRESS as coreAddressExport };

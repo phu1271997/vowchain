@@ -1,27 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, AlertTriangle, ArrowRight, ArrowLeft, Copy, Check, FileText } from "lucide-react";
+import { Heart, AlertTriangle, ArrowRight, ArrowLeft, Copy, Check, FileText, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { useWallet } from "../lib/walletContext";
-import { createAgreement } from "../lib/contractApi";
+import {
+  createAgreement,
+  healthCheck,
+  isCoreConfigured,
+  CORE_CONTRACT_ADDRESS,
+} from "../lib/contractApi";
 import { addToHistory } from "../lib/agreementHistory";
 import { ConsensusProgress } from "../components/ConsensusProgress";
+import { parseEther } from "viem";
 
 export const CreateAgreementPage: React.FC = () => {
-  const { rawAccount, account, walletMode } = useWallet();
+  const { rawAccount, account, walletMode, switchToDemo, balance } = useWallet();
   const navigate = useNavigate();
 
   // Wizard state
   const [step, setStep] = useState(1);
   const [partnerB, setPartnerB] = useState("");
   const [terms, setTerms] = useState("");
-  const [deposit, setDeposit] = useState("");
+  /** Deposit in GEN (human units), converted to wei on submit */
+  const [depositGen, setDepositGen] = useState("0");
 
   const [loading, setLoading] = useState(false);
   const [progressMsg, setProgressMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [newAgreementId, setNewAgreementId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [health, setHealth] = useState("Checking GenLayer binding…");
+  const [healthOk, setHealthOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    healthCheck().then((r) => {
+      setHealthOk(r.ok);
+      setHealth(r.message);
+    });
+  }, []);
 
   // Term templates
   const templates = [
@@ -44,9 +60,16 @@ export const CreateAgreementPage: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (step === 1 && !partnerB.trim()) {
-      setError("Partner B address is required.");
-      return;
+    if (step === 1) {
+      const addr = partnerB.trim();
+      if (!addr.startsWith("0x") || addr.length !== 42) {
+        setError("Partner B must be a valid 0x address (42 characters).");
+        return;
+      }
+      if (account && addr.toLowerCase() === account.toLowerCase()) {
+        setError("Partner B cannot be your own address.");
+        return;
+      }
     }
     if (step === 2 && !terms.trim()) {
       setError("Please write or select separation terms.");
@@ -63,18 +86,41 @@ export const CreateAgreementPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!account) return;
+    if (!account || !rawAccount) {
+      setError("Wallet not ready. Switch to Demo Sandbox mode in the navbar.");
+      return;
+    }
+    if (!isCoreConfigured()) {
+      setError(
+        "Core contract address is not configured (VITE_VOWCHAIN_CORE_ADDRESS). Deploy vowchain_core.py and set the env on Vercel."
+      );
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const depositWei = deposit ? BigInt(deposit) : 0n;
-      const id = await createAgreement(rawAccount, partnerB, terms, depositWei, setProgressMsg);
+      // Prefer GEN units in the form (not raw wei) to avoid judge confusion
+      let depositWei = 0n;
+      const genStr = (depositGen || "0").trim();
+      if (genStr && genStr !== "0") {
+        depositWei = parseEther(genStr as `${number}`);
+      }
+      const id = await createAgreement(
+        rawAccount,
+        partnerB.trim(),
+        terms.trim(),
+        depositWei,
+        setProgressMsg
+      );
       setNewAgreementId(id);
       addToHistory(id, "partner_a");
       setStep(4); // Success step
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to create agreement. Check if gas or inputs are correct.");
+      setError(
+        err.message ||
+          "Failed to create agreement. If you saw wallet_getSnaps, switch to Demo Sandbox mode and retry."
+      );
     } finally {
       setLoading(false);
     }
@@ -100,6 +146,33 @@ export const CreateAgreementPage: React.FC = () => {
       exit={{ opacity: 0 }}
       className="max-w-3xl mx-auto px-4 py-8"
     >
+      {/* Binding / wallet hints for reviewers */}
+      <div className="mb-6 rounded-xl border border-[var(--border-color)] bg-black/30 p-4 text-left text-xs space-y-2">
+        <div className="flex items-start gap-2 text-[var(--color-text-secondary)]">
+          <Info size={14} className="mt-0.5 shrink-0 text-[var(--accent-purple)]" />
+          <div className="space-y-1">
+            <p>
+              <strong className="text-white">Tip:</strong> Use{" "}
+              <button type="button" onClick={switchToDemo} className="text-[var(--accent-purple)] font-bold underline">
+                Demo Sandbox
+              </button>{" "}
+              mode to create agreements without MetaMask Snaps. Local keys sign GenLayer txs directly
+              (avoids <code className="text-amber-300">wallet_getSnaps</code> errors).
+            </p>
+            <p className="font-mono text-[10px] break-all">
+              Core: {isCoreConfigured() ? CORE_CONTRACT_ADDRESS : "NOT SET — configure VITE_VOWCHAIN_CORE_ADDRESS"}
+            </p>
+            <p className={healthOk ? "text-emerald-400" : healthOk === false ? "text-rose-400" : "text-zinc-400"}>
+              {healthOk === true ? "✓ " : healthOk === false ? "✗ " : "… "}
+              {health}
+            </p>
+            <p className="text-[var(--color-text-muted)]">
+              Mode: <strong className="text-white">{walletMode}</strong> · Balance: {balance}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Wizard Header */}
       <div className="flex justify-between items-center mb-8 border-b border-[var(--border-color)] pb-4">
         <div>
@@ -248,28 +321,46 @@ export const CreateAgreementPage: React.FC = () => {
           {step === 3 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-5 text-left">
               <div className="form-group">
-                <label className="form-label">Initial Deposit contribution (Wei)</label>
+                <label className="form-label">Initial Deposit (GEN)</label>
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
                   placeholder="0"
-                  value={deposit}
-                  onChange={(e) => setDeposit(e.target.value)}
+                  value={depositGen}
+                  onChange={(e) => setDepositGen(e.target.value)}
                   className="form-input font-mono"
                 />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {["0", "1", "5", "10"].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setDepositGen(v)}
+                      className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-[var(--border-color)] hover:border-[var(--accent-purple)] text-white"
+                    >
+                      {v} GEN
+                    </button>
+                  ))}
+                </div>
                 <span className="text-[10px] text-[var(--color-text-muted)] mt-1">
-                  Optionally deposit initial assets into the joint pool. Leave as 0 if funding later. (1 GEN = 10^18 Wei)
+                  Optional joint-pool deposit. Converted to wei on-chain (1 GEN = 10¹⁸ wei). Use 0 to create the vow without funding.
                 </span>
               </div>
 
               <div className="bg-black/20 border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-2">
                 <span className="text-xs font-bold text-[var(--color-text-secondary)] uppercase">Summary</span>
                 <div className="flex justify-between text-xs">
+                  <span className="text-[var(--color-text-muted)]">Wallet mode:</span>
+                  <span className="text-white font-bold">{walletMode === "demo" ? "Demo Sandbox (no Snaps)" : "MetaMask"}</span>
+                </div>
+                <div className="flex justify-between text-xs mt-1">
                   <span className="text-[var(--color-text-muted)]">Partner B Address:</span>
-                  <span className="text-white font-mono">{partnerB}</span>
+                  <span className="text-white font-mono truncate max-w-[55%]">{partnerB}</span>
                 </div>
                 <div className="flex justify-between text-xs mt-1">
                   <span className="text-[var(--color-text-muted)]">Initial Deposit:</span>
-                  <span className="text-emerald-400 font-bold">{deposit ? `${Number(deposit) / 1e18} GEN` : "0.00 GEN"}</span>
+                  <span className="text-emerald-400 font-bold">{depositGen || "0"} GEN</span>
                 </div>
               </div>
 

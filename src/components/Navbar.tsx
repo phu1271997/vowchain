@@ -97,21 +97,21 @@ export const Navbar: React.FC = () => {
 
               {walletMode === "demo" ? (
                 <button
-                  onClick={connectMetaMask}
+                  onClick={() => connectMetaMask().catch((e) => alert(e?.message || String(e)))}
                   className="flex items-center gap-1.5 bg-gradient-to-r from-[#e2a76f]/10 to-[#b76e79]/10 hover:from-[#e2a76f]/20 hover:to-[#b76e79]/20 border border-[#b76e79]/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-                  title="Switch to MetaMask Pro Mode"
+                  title="Optional MetaMask (no GenLayer Snap required for writes)"
                 >
                   <Wallet size={13} className="text-[#e2a76f]" />
-                  <span>Go Pro Mode</span>
+                  <span>MetaMask</span>
                 </button>
               ) : (
                 <button
                   onClick={switchToDemo}
                   className="flex items-center gap-1.5 bg-[rgba(183,110,121,0.1)] hover:bg-[rgba(183,110,121,0.2)] border border-[var(--accent-purple)]/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-                  title="Switch back to Demo Sandbox"
+                  title="Demo Sandbox uses a local key — recommended (avoids wallet_getSnaps)"
                 >
                   <Coins size={13} className="text-[var(--accent-purple)]" />
-                  <span>Use Demo Mode</span>
+                  <span>Demo Sandbox</span>
                 </button>
               )}
 
