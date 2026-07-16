@@ -80,14 +80,14 @@ export const JoinAgreementPage: React.FC = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="max-w-2xl mx-auto px-4 py-8"
+      className="max-w-2xl mx-auto px-4 sm:px-6 py-10"
     >
-      <div className="border-b border-[var(--border-color)] pb-4 mb-8 text-left">
-        <h2 className="font-heading font-extrabold text-2xl text-white flex items-center gap-2">
-          <Users className="text-[var(--accent-purple)]" size={26} />
-          Join Partner Agreement
+      <div className="page-header">
+        <h2 className="page-title">
+          <Users className="text-[var(--accent-purple)]" size={24} />
+          Join partner agreement
         </h2>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+        <p className="page-subtitle">
           Enter an Agreement ID shared by your partner to verify terms and complete the joint deposit.
         </p>
       </div>
@@ -123,7 +123,7 @@ export const JoinAgreementPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={!agreementId}
-                    className="bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold px-6 py-2.5 rounded-xl hover:opacity-95 transition-all"
+                    className="btn btn-primary shrink-0"
                   >
                     Search
                   </button>
@@ -187,13 +187,13 @@ export const JoinAgreementPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setAgreement(null)}
-                      className="bg-[rgba(255,255,255,0.03)] border border-[var(--border-color)] text-white font-bold px-6 py-3 rounded-xl"
+                      className="btn btn-secondary"
                     >
                       Clear
                     </button>
                     <button
                       type="submit"
-                      className="flex items-center gap-1.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold px-8 py-3 rounded-xl hover:opacity-95 shadow-[0_4px_15px_rgba(183,110,121,0.2)]"
+                      className="btn btn-primary"
                     >
                       <span>Join & Activate Vow</span>
                       <ArrowRight size={16} />

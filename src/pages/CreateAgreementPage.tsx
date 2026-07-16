@@ -139,27 +139,73 @@ export const CreateAgreementPage: React.FC = () => {
     setPartnerB("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
   };
 
+  const stepLabels = ["Partner", "Terms", "Deposit", "Done"];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="max-w-3xl mx-auto px-4 py-8"
+      className="max-w-3xl mx-auto px-4 sm:px-6 py-10"
     >
-      {/* Binding / wallet hints for reviewers */}
-      <div className="mb-6 rounded-xl border border-[var(--border-color)] bg-black/30 p-4 text-left text-xs space-y-2">
+      <div className="page-header-row !mb-6">
+        <div>
+          <h2 className="page-title">
+            <Heart className="text-[var(--accent-purple)]" size={24} />
+            Create relationship vow
+          </h2>
+          <p className="page-subtitle mt-1">
+            Step {step} of 4 —{" "}
+            {step === 1
+              ? "Partner details"
+              : step === 2
+              ? "Separation rules"
+              : step === 3
+              ? "Initial deposit"
+              : "Registered"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div
+                className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all ${
+                  step === i
+                    ? "bg-[var(--accent-purple)] border-transparent text-[#0c0a09]"
+                    : step > i
+                    ? "bg-[var(--accent-purple)]/25 border-[var(--accent-purple)]/40 text-[var(--accent-purple)]"
+                    : "bg-transparent border-[var(--border-color)] text-[var(--color-text-muted)]"
+                }`}
+                title={stepLabels[i - 1]}
+              >
+                {i}
+              </div>
+              {i < 4 && (
+                <div
+                  className={`hidden sm:block w-6 h-px ${
+                    step > i ? "bg-[var(--accent-purple)]/50" : "bg-[var(--border-color)]"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Binding / wallet hints */}
+      <div className="mb-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-inset)] p-4 text-left text-xs space-y-2">
         <div className="flex items-start gap-2 text-[var(--color-text-secondary)]">
           <Info size={14} className="mt-0.5 shrink-0 text-[var(--accent-purple)]" />
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <p>
               <strong className="text-white">Tip:</strong> Use{" "}
-              <button type="button" onClick={switchToDemo} className="text-[var(--accent-purple)] font-bold underline">
+              <button type="button" onClick={switchToDemo} className="text-[var(--accent-purple)] font-bold underline underline-offset-2">
                 Demo Sandbox
               </button>{" "}
-              mode to create agreements without MetaMask Snaps. Local keys sign GenLayer txs directly
-              (avoids <code className="text-amber-300">wallet_getSnaps</code> errors).
+              to create agreements without MetaMask Snaps (avoids{" "}
+              <code className="text-amber-300/90 text-[10px]">wallet_getSnaps</code>).
             </p>
-            <p className="font-mono text-[10px] break-all">
+            <p className="font-mono text-[10px] break-all text-[var(--color-text-muted)]">
               Core: {isCoreConfigured() ? CORE_CONTRACT_ADDRESS : "NOT SET — configure VITE_VOWCHAIN_CORE_ADDRESS"}
             </p>
             <p className={healthOk ? "text-emerald-400" : healthOk === false ? "text-rose-400" : "text-zinc-400"}>
@@ -170,32 +216,6 @@ export const CreateAgreementPage: React.FC = () => {
               Mode: <strong className="text-white">{walletMode}</strong> · Balance: {balance}
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* Wizard Header */}
-      <div className="flex justify-between items-center mb-8 border-b border-[var(--border-color)] pb-4">
-        <div>
-          <h2 className="font-heading font-extrabold text-2xl text-white">Create Relationship Vow</h2>
-          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-            Step {step} of 4: {step === 1 ? "Partner details" : step === 2 ? "Write Vow Rules" : step === 3 ? "Fund Setup" : "Vow Registered"}
-          </p>
-        </div>
-
-        {/* Step Indicator dots */}
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                step === i
-                  ? "bg-[var(--accent-purple)] w-4"
-                  : step > i
-                  ? "bg-[var(--accent-pink)]"
-                  : "bg-zinc-700"
-              }`}
-            />
-          ))}
         </div>
       </div>
 
@@ -213,9 +233,9 @@ export const CreateAgreementPage: React.FC = () => {
           {/* Step 1: Partner Details */}
           {step === 1 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-5 text-left">
-              <div className="bg-[rgba(183,110,121,0.05)] border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">Your Wallet Address (Partner A)</span>
-                <span className="text-sm font-mono text-white font-bold">{account}</span>
+              <div className="surface flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Your wallet (Partner A)</span>
+                <span className="text-sm font-mono text-white font-semibold break-all">{account}</span>
               </div>
 
               <div className="form-group">
@@ -248,7 +268,7 @@ export const CreateAgreementPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-95"
+                  className="btn btn-primary"
                 >
                   <span>Set Separation Rules</span>
                   <ArrowRight size={16} />
@@ -297,20 +317,12 @@ export const CreateAgreementPage: React.FC = () => {
               </div>
 
               <div className="flex justify-between mt-6">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.03)] border border-[var(--border-color)] text-white font-bold px-6 py-3 rounded-xl"
-                >
+                <button type="button" onClick={handleBack} className="btn btn-secondary">
                   <ArrowLeft size={16} />
-                  <span>Back</span>
+                  Back
                 </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-95"
-                >
-                  <span>Deposit Funds</span>
+                <button type="button" onClick={handleNext} className="btn btn-primary">
+                  Deposit funds
                   <ArrowRight size={16} />
                 </button>
               </div>
@@ -348,8 +360,8 @@ export const CreateAgreementPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="bg-black/20 border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-2">
-                <span className="text-xs font-bold text-[var(--color-text-secondary)] uppercase">Summary</span>
+              <div className="surface flex flex-col gap-2">
+                <span className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wide">Summary</span>
                 <div className="flex justify-between text-xs">
                   <span className="text-[var(--color-text-muted)]">Wallet mode:</span>
                   <span className="text-white font-bold">{walletMode === "demo" ? "Demo Sandbox (no Snaps)" : "MetaMask"}</span>
@@ -365,20 +377,13 @@ export const CreateAgreementPage: React.FC = () => {
               </div>
 
               <div className="flex justify-between mt-6">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.03)] border border-[var(--border-color)] text-white font-bold px-6 py-3 rounded-xl"
-                >
+                <button type="button" onClick={handleBack} className="btn btn-secondary">
                   <ArrowLeft size={16} />
-                  <span>Back</span>
+                  Back
                 </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold px-8 py-3.5 rounded-xl hover:opacity-95 shadow-[0_4px_15px_rgba(183,110,121,0.25)]"
-                >
-                  <Heart size={16} className="fill-white/10" />
-                  <span>Initialize Agreement Vow</span>
+                <button type="submit" className="btn btn-primary">
+                  <Heart size={16} />
+                  Initialize agreement
                 </button>
               </div>
             </motion.div>
@@ -389,47 +394,46 @@ export const CreateAgreementPage: React.FC = () => {
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="card bg-[rgba(27,8,14,0.4)] border border-[var(--border-color)] p-8 text-center flex flex-col items-center gap-6"
+              className="card card-glow p-8 sm:p-10 text-center flex flex-col items-center gap-6"
             >
               <div className="h-16 w-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                <Heart size={30} className="fill-emerald-400/20" />
+                <Heart size={28} />
               </div>
 
               <div>
-                <h3 className="font-heading font-extrabold text-2xl text-white">Vow Successfully Drafted!</h3>
-                <p className="text-sm text-[var(--color-text-secondary)] mt-1.5 max-w-md mx-auto">
-                  Your smart prenuptial agreement is now registered on GenLayer. Copy the Agreement ID and share it with your partner.
+                <h3 className="font-heading font-bold text-2xl text-white tracking-tight">
+                  Vow successfully drafted
+                </h3>
+                <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-md mx-auto leading-relaxed">
+                  Your prenup is registered on GenLayer. Copy the Agreement ID and share it with your partner.
                 </p>
               </div>
 
-              {/* ID Card Display */}
-              <div className="bg-black/40 border border-[var(--border-color)] rounded-2xl p-6 w-full max-w-sm flex flex-col gap-4">
+              <div className="surface w-full max-w-sm flex flex-col gap-3">
                 <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
-                  Vowchain Agreement ID
+                  Agreement ID
                 </span>
-                
-                <div className="flex items-center justify-between bg-black/50 border border-[var(--border-color)] px-4 py-3 rounded-xl font-mono text-lg font-bold text-white">
+                <div className="flex items-center justify-between bg-black/40 border border-[var(--border-color)] px-4 py-3 rounded-xl font-mono text-lg font-bold text-white">
                   <span>#{newAgreementId}</span>
                   <button
                     type="button"
                     onClick={handleCopyId}
-                    className="p-1.5 hover:bg-white/5 rounded-lg text-[var(--color-text-secondary)] hover:text-white transition-colors"
+                    className="p-2 hover:bg-white/5 rounded-lg text-[var(--color-text-secondary)] hover:text-white transition-colors"
+                    aria-label="Copy agreement ID"
                   >
                     {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex gap-4 w-full justify-center">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/agreement/${newAgreementId}`)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold py-3.5 px-8 rounded-xl hover:opacity-95 shadow-[0_4px_15px_rgba(183,110,121,0.2)]"
-                >
-                  <span>Go to Vow Dashboard</span>
-                  <ArrowRight size={16} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/agreement/${newAgreementId}`)}
+                className="btn btn-primary"
+              >
+                Go to dashboard
+                <ArrowRight size={16} />
+              </button>
             </motion.div>
           )}
         </form>

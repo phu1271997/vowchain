@@ -39,16 +39,20 @@ export const DisputePage: React.FC = () => {
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      className="max-w-2xl mx-auto px-4 py-12 text-left"
+      className="max-w-2xl mx-auto px-4 sm:px-6 py-12 text-left"
     >
-      <div className="card border border-rose-500/20 bg-rose-500/5 p-8 flex flex-col gap-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-rose-500/30" />
+      <div className="card border border-rose-500/25 bg-rose-500/[0.04] p-8 flex flex-col gap-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-rose-500/50 to-transparent" />
 
-        <div className="flex items-center gap-3 text-rose-400">
-          <ShieldAlert size={36} />
+        <div className="flex items-start gap-3 text-rose-400">
+          <div className="h-12 w-12 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center shrink-0">
+            <ShieldAlert size={22} />
+          </div>
           <div>
-            <h2 className="font-heading font-extrabold text-2xl text-white">Dispute Formally Registered</h2>
-            <p className="text-xs text-rose-300 mt-0.5">Agreement Vow #{id}</p>
+            <h2 className="font-heading font-bold text-xl sm:text-2xl text-white tracking-tight">
+              Dispute registered
+            </h2>
+            <p className="text-xs text-rose-300/80 mt-0.5 font-mono">Agreement #{id}</p>
           </div>
         </div>
 
@@ -97,7 +101,7 @@ export const DisputePage: React.FC = () => {
         <div className="border-t border-[var(--border-color)] pt-6 flex justify-start">
           <button
             onClick={() => navigate(`/agreement/${id}`)}
-            className="flex items-center gap-2 bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[var(--border-color)] text-white font-bold py-3 px-6 rounded-xl transition-all"
+            className="btn btn-secondary"
           >
             <ArrowLeft size={16} />
             <span>Return to Vow Dashboard</span>

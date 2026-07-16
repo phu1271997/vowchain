@@ -99,16 +99,15 @@ export const ReputationPage: React.FC = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-10 text-left"
+      className="max-w-3xl mx-auto px-4 sm:px-6 py-10 flex flex-col gap-8 text-left"
     >
-      {/* Header */}
-      <div className="border-b border-[var(--border-color)] pb-6">
-        <h2 className="font-heading font-extrabold text-2xl text-white flex items-center gap-2">
-          <Award className="text-[var(--accent-purple)]" size={26} />
-          Partner Reputation Registry
+      <div className="page-header">
+        <h2 className="page-title">
+          <Award className="text-[var(--accent-purple)]" size={24} />
+          Partner reputation registry
         </h2>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-          Verify any address's trust score. Scores increase (+2/+1) for amicable settlements and decrease (-1) for disputes.
+        <p className="page-subtitle">
+          Verify any address trust score. +2/+1 for amicable settlements, −1 for disputes.
         </p>
       </div>
 
@@ -131,7 +130,7 @@ export const ReputationPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading || !searchAddr}
-              className="bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold px-6 py-2.5 rounded-xl hover:opacity-95 transition-all"
+              className="btn btn-primary shrink-0"
             >
               Verify
             </button>

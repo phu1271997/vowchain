@@ -210,25 +210,27 @@ export const AgreementDetailPage: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-8 text-left"
+      className="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex flex-col gap-8 text-left"
     >
-      {/* Top Header Row */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--border-color)] pb-6">
+      <div className="page-header-row">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="font-heading font-extrabold text-2xl text-white">
-              Vow Dashboard #{agreement.agreement_id}
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="page-title !gap-2">
+              Vow dashboard
+              <span className="text-[var(--color-text-muted)] font-mono text-lg font-semibold">
+                #{agreement.agreement_id}
+              </span>
             </h2>
             <StatusBadge status={agreement.status} />
           </div>
-          <p className="text-xs text-[var(--color-text-secondary)] mt-1 font-mono">
-            On-Chain ID: {agreement.agreement_id}
+          <p className="page-subtitle font-mono text-xs mt-1">
+            On-chain ID: {agreement.agreement_id}
           </p>
         </div>
 
-        <button onClick={fetchDetails} className="flex items-center gap-1 text-xs text-[var(--accent-purple)] hover:text-[var(--accent-pink)] font-bold">
+        <button onClick={fetchDetails} className="btn btn-ghost btn-sm">
           <RefreshCw size={13} />
-          Refresh Details
+          Refresh
         </button>
       </div>
 
@@ -307,34 +309,34 @@ export const AgreementDetailPage: React.FC = () => {
             <div className="flex border-b border-[var(--border-color)] gap-2">
               <button
                 onClick={() => setActiveTab("terms")}
-                className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-colors ${
+                className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-colors cursor-pointer ${
                   activeTab === "terms"
                     ? "border-[var(--accent-purple)] text-white"
                     : "border-transparent text-[var(--color-text-muted)] hover:text-white"
                 }`}
               >
-                Vow Terms
+                Vow terms
               </button>
               <button
                 onClick={() => setActiveTab("evidence")}
-                className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-colors ${
+                className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-colors cursor-pointer ${
                   activeTab === "evidence"
                     ? "border-[var(--accent-purple)] text-white"
                     : "border-transparent text-[var(--color-text-muted)] hover:text-white"
                 }`}
               >
-                Evidence Panel
+                Evidence
               </button>
               {proposal && (
                 <button
                   onClick={() => setActiveTab("proposal")}
-                  className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-colors ${
+                  className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-colors cursor-pointer ${
                     activeTab === "proposal"
                       ? "border-[var(--accent-purple)] text-white"
                       : "border-transparent text-[var(--color-text-muted)] hover:text-white"
                   }`}
                 >
-                  AI Split proposal
+                  AI split
                 </button>
               )}
             </div>
@@ -354,7 +356,7 @@ export const AgreementDetailPage: React.FC = () => {
                   <div className="mt-4 border-t border-[var(--border-color)] pt-5">
                     <button
                       onClick={handleInitiateDissolution}
-                      className="bg-transparent hover:bg-rose-500/10 border border-rose-500/40 text-rose-400 font-bold py-3 px-6 rounded-xl transition-all flex items-center gap-1.5"
+                      className="btn btn-danger"
                     >
                       <ShieldAlert size={16} />
                       <span>Declare Relationship Dissolution</span>
@@ -465,7 +467,7 @@ export const AgreementDetailPage: React.FC = () => {
                       <button
                         onClick={handleComputeSplit}
                         disabled={!bothSubmitted || !isParticipant}
-                        className="flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold py-4 px-8 rounded-xl hover:opacity-95 transition-all shadow-[0_4px_15px_rgba(183,110,121,0.2)] disabled:opacity-50"
+                        className="btn btn-primary py-4 disabled:opacity-50"
                       >
                         <Scale size={18} />
                         <span>Run AI Arbitration Consensus</span>
@@ -519,7 +521,7 @@ export const AgreementDetailPage: React.FC = () => {
                   <div className="border-t border-[var(--border-color)] pt-4 mt-2 flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={handleSettleDeadlock}
-                      className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold py-3 px-6 rounded-xl hover:opacity-95"
+                      className="btn btn-primary"
                     >
                       <CheckCircle size={15} />
                       <span>Sign 50/50 Deadlock Release</span>

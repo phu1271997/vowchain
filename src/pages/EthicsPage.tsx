@@ -8,16 +8,15 @@ export const EthicsPage: React.FC = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-10 text-left"
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-10 flex flex-col gap-8 text-left"
     >
-      {/* Header */}
-      <div className="border-b border-[var(--border-color)] pb-6">
-        <h2 className="font-heading font-extrabold text-2xl text-white flex items-center gap-2">
-          <HelpCircle className="text-[var(--accent-purple)]" size={26} />
-          Ethical & Legal Considerations
+      <div className="page-header">
+        <h2 className="page-title">
+          <HelpCircle className="text-[var(--accent-purple)]" size={24} />
+          Ethics & legal considerations
         </h2>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-          Matrimonial disputes involve highly sensitive parameters. Read our AI safety boundaries and legal limitations.
+        <p className="page-subtitle">
+          Matrimonial disputes are highly sensitive. Read our AI safety boundaries and legal limitations.
         </p>
       </div>
 

@@ -71,23 +71,22 @@ export const TreasuryPage: React.FC = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-10 text-left"
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-10 flex flex-col gap-8 text-left"
     >
-      {/* Header */}
-      <div className="border-b border-[var(--border-color)] pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="page-header-row">
         <div>
-          <h2 className="font-heading font-extrabold text-2xl text-white flex items-center gap-2">
-            <Coins className="text-[var(--accent-purple)]" size={26} />
-            Treasury & Settlement Pool
+          <h2 className="page-title">
+            <Coins className="text-[var(--accent-purple)]" size={24} />
+            Treasury & settlement
           </h2>
-          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-            Withdraw funds credited from settled vow divisions or check current solvency guarantees.
+          <p className="page-subtitle">
+            Withdraw funds credited from settled vow divisions or check solvency guarantees.
           </p>
         </div>
 
-        <button onClick={fetchWithdrawable} className="flex items-center gap-1 text-xs text-[var(--accent-purple)] hover:text-[var(--accent-pink)] font-bold">
+        <button onClick={fetchWithdrawable} className="btn btn-ghost btn-sm">
           <RefreshCw size={13} />
-          Refresh Balance
+          Refresh
         </button>
       </div>
 
@@ -129,7 +128,7 @@ export const TreasuryPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={withdrawable === 0n}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] text-white font-bold py-4 px-6 rounded-xl hover:opacity-95 transition-all shadow-[0_4px_15px_rgba(183,110,121,0.25)] disabled:opacity-50"
+                  className="btn btn-primary w-full py-4 disabled:opacity-50"
                 >
                   <span>Claim & Withdraw Funds</span>
                   <ArrowRight size={16} />

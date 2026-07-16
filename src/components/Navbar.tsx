@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Heart, Scale, Wallet, Coins, Menu, X } from "lucide-react";
+import { Scale, Wallet, Coins, Menu, X, FlaskConical } from "lucide-react";
 import { useWallet } from "../lib/walletContext";
 
 export const Navbar: React.FC = () => {
@@ -9,50 +9,45 @@ export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
-  const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
 
   const navLinks = [
-    { path: "/create", label: "Create Prenup" },
-    { path: "/join", label: "Join Partner" },
-    { path: "/demo", label: "Interactive Demos" },
+    { path: "/create", label: "Create" },
+    { path: "/join", label: "Join" },
+    { path: "/demo", label: "Demos" },
     { path: "/treasury", label: "Treasury" },
-    { path: "/ethics", label: "Ethics & Safety" },
+    { path: "/ethics", label: "Ethics" },
   ];
 
+  const shortAddr = account
+    ? `${account.substring(0, 6)}…${account.substring(account.length - 4)}`
+    : "Disconnected";
+
   return (
-    <nav className="border-b border-[var(--border-color)] bg-[var(--bg-secondary)] backdrop-blur-md sticky top-0 z-50">
+    <nav className="nav-shell">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          
-          {/* Logo and Brand */}
+        <div className="flex items-center justify-between h-[4.25rem]">
           <div className="flex items-center gap-8">
-            <Link to="/" onClick={closeMenu} className="flex items-center gap-2 group">
-              <div className="relative">
-                <Scale className="h-7 w-7 text-[var(--accent-purple)] group-hover:scale-110 transition-transform" />
-                <Heart className="h-4.5 w-4.5 text-[var(--accent-pink)] absolute -bottom-1 -right-1 group-hover:scale-125 transition-transform fill-[var(--accent-pink)]" />
+            <Link to="/" onClick={closeMenu} className="flex items-center gap-2.5 group">
+              <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-[var(--accent-purple)] to-[var(--accent-blue)] flex items-center justify-center shadow-[0_4px_14px_rgba(201,162,122,0.3)] group-hover:scale-[1.04] transition-transform">
+                <Scale size={18} className="text-[#0c0a09]" strokeWidth={2.25} />
               </div>
-              <div>
-                <span className="font-heading font-extrabold text-xl tracking-tight text-white bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] bg-clip-text text-transparent">
+              <div className="leading-tight">
+                <span className="font-heading font-bold text-[1.05rem] tracking-tight text-white block">
                   VowChain
                 </span>
-                <span className="hidden sm:block text-[10px] text-[var(--color-text-muted)] tracking-wider uppercase font-semibold">
-                  AI-Arbitrated Prenup
+                <span className="hidden sm:block text-[10px] text-[var(--color-text-muted)] tracking-[0.08em] uppercase font-semibold">
+                  GenLayer Prenups
                 </span>
               </div>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-0.5">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive(link.path)
-                      ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
-                      : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
-                  }`}
+                  className={`nav-link ${isActive(link.path) ? "nav-link-active" : ""}`}
                 >
                   {link.label}
                 </Link>
@@ -60,93 +55,90 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Desktop Right Side: Wallet details */}
-          <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[rgba(27,8,14,0.4)] border border-[var(--border-color)] rounded-xl p-1.5 pl-3">
-              <div className="flex flex-col items-end hidden lg:flex">
-                <span className="text-[11px] text-[var(--color-text-muted)] font-semibold uppercase">
-                  {walletMode === "demo" ? "Sandbox Account" : "MetaMask Pro"}
+          {/* Desktop wallet */}
+          <div className="hidden md:flex items-center gap-2.5">
+            <div className="flex items-center gap-2 bg-[var(--bg-inset)] border border-[var(--border-color)] rounded-xl p-1 pl-3">
+              <div className="hidden lg:flex flex-col items-end pr-1">
+                <span className="text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-wide">
+                  {walletMode === "demo" ? "Sandbox" : "MetaMask"}
                 </span>
-                <span className="text-xs font-bold text-white tracking-wide">{balance}</span>
+                <span className="text-xs font-semibold text-white tabular-nums">{balance}</span>
               </div>
-              
+
               <div className="h-6 w-px bg-[var(--border-color)] hidden lg:block" />
 
               {walletMode === "demo" ? (
                 <button
                   onClick={() => connectMetaMask().catch((e) => alert(e?.message || String(e)))}
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-[#e2a76f]/10 to-[#b76e79]/10 hover:from-[#e2a76f]/20 hover:to-[#b76e79]/20 border border-[#b76e79]/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+                  className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-[var(--border-color)] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all"
                   title="Optional MetaMask (no GenLayer Snap required for writes)"
                 >
-                  <Wallet size={13} className="text-[#e2a76f]" />
-                  <span>MetaMask</span>
+                  <Wallet size={13} className="text-[var(--accent-cyan)]" />
+                  MetaMask
                 </button>
               ) : (
                 <button
                   onClick={switchToDemo}
-                  className="flex items-center gap-1.5 bg-[rgba(183,110,121,0.1)] hover:bg-[rgba(183,110,121,0.2)] border border-[var(--accent-purple)]/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-                  title="Demo Sandbox uses a local key — recommended (avoids wallet_getSnaps)"
+                  className="flex items-center gap-1.5 bg-[rgba(201,162,122,0.1)] hover:bg-[rgba(201,162,122,0.18)] border border-[var(--accent-purple)]/30 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all"
+                  title="Demo Sandbox uses a local key"
                 >
-                  <Coins size={13} className="text-[var(--accent-purple)]" />
-                  <span>Demo Sandbox</span>
+                  <FlaskConical size={13} className="text-[var(--accent-purple)]" />
+                  Demo
                 </button>
               )}
 
-              <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1.5 rounded-lg border border-[var(--border-color)]">
-                <div
-                  className={`h-2.5 w-2.5 rounded-full ${
+              <div className="flex items-center gap-1.5 bg-black/35 px-2.5 py-1.5 rounded-lg border border-[var(--border-color)]">
+                <span
+                  className={`h-2 w-2 rounded-full ${
                     walletMode === "demo"
-                      ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)] animate-pulse"
-                      : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                      ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.55)]"
+                      : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.55)]"
                   }`}
+                  aria-hidden
                 />
-                <span className="text-xs font-mono text-[var(--color-text-secondary)]">
-                  {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : "Disconnected"}
-                </span>
+                <span className="text-xs font-mono text-[var(--color-text-secondary)]">{shortAddr}</span>
               </div>
             </div>
           </div>
 
-          {/* Mobile Right Side: Compact Connection Status & Hamburger Icon */}
-          <div className="flex items-center gap-3 md:hidden">
+          {/* Mobile */}
+          <div className="flex items-center gap-2.5 md:hidden">
             {account && (
-              <div className="flex items-center gap-1 bg-black/40 px-2.5 py-1 rounded-lg border border-[var(--border-color)]">
-                <div
-                  className={`h-2 w-2 rounded-full ${
-                    walletMode === "demo" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+              <div className="flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded-lg border border-[var(--border-color)]">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    walletMode === "demo" ? "bg-amber-400" : "bg-emerald-400"
                   }`}
                 />
                 <span className="text-[10px] font-mono text-[var(--color-text-secondary)]">
-                  {account.substring(0, 4)}...{account.substring(account.length - 4)}
+                  {account.substring(0, 4)}…{account.substring(account.length - 4)}
                 </span>
               </div>
             )}
-            
+
             <button
-              onClick={toggleMenu}
-              className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-white hover:bg-white/5 transition-colors focus:outline-none"
-              aria-label="Toggle menu"
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2.5 rounded-lg text-[var(--color-text-secondary)] hover:text-white hover:bg-white/5 transition-colors min-h-11 min-w-11 flex items-center justify-center"
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
             >
               {isOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* Mobile Drawer Dropdown Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-secondary)]/95 backdrop-blur-lg px-4 py-4 flex flex-col gap-4 animate-fade-in">
-          {/* Navigation Links */}
-          <div className="flex flex-col gap-1.5">
+        <div className="md:hidden border-t border-[var(--border-color)] bg-[rgba(7,11,18,0.96)] backdrop-blur-xl px-4 py-4 flex flex-col gap-4 animate-fade-in">
+          <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={closeMenu}
-                className={`w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                className={`w-full px-3 py-3 rounded-lg text-sm font-semibold transition-colors min-h-11 flex items-center ${
                   isActive(link.path)
-                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
+                    ? "bg-[rgba(201,162,122,0.12)] text-[var(--accent-purple)]"
                     : "text-[var(--color-text-secondary)] hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -155,17 +147,15 @@ export const Navbar: React.FC = () => {
             ))}
           </div>
 
-          {/* Wallet management panel in Drawer */}
-          <div className="border-t border-[var(--border-color)]/50 pt-4 flex flex-col gap-3">
+          <div className="border-t border-[var(--border-color)] pt-4 flex flex-col gap-3">
             <div className="flex justify-between items-center px-3 text-xs">
-              <span className="text-[var(--color-text-muted)] font-semibold">Wallet Balance</span>
-              <span className="text-white font-bold">{balance}</span>
+              <span className="text-[var(--color-text-muted)] font-semibold">Balance</span>
+              <span className="text-white font-bold tabular-nums">{balance}</span>
             </div>
-            
             <div className="flex justify-between items-center px-3 text-xs">
-              <span className="text-[var(--color-text-muted)] font-semibold">Security Mode</span>
+              <span className="text-[var(--color-text-muted)] font-semibold">Mode</span>
               <span className={`font-bold ${walletMode === "demo" ? "text-amber-400" : "text-emerald-400"}`}>
-                {walletMode === "demo" ? "Sandbox Account" : "MetaMask Mode"}
+                {walletMode === "demo" ? "Sandbox" : "MetaMask"}
               </span>
             </div>
 
@@ -176,14 +166,14 @@ export const Navbar: React.FC = () => {
                   connectMetaMask().catch((e) => alert(e?.message || String(e)));
                   closeMenu();
                 }}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all border ${
+                className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-lg text-xs font-bold transition-all border min-h-11 ${
                   walletMode === "metamask"
-                    ? "bg-[rgba(16,185,129,0.1)] border-emerald-500/20 text-emerald-400 opacity-60"
+                    ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400 opacity-70"
                     : "bg-black/30 border-[var(--border-color)] text-[var(--color-text-secondary)] hover:text-white"
                 }`}
               >
-                <Wallet size={12} />
-                <span>MetaMask</span>
+                <Wallet size={13} />
+                MetaMask
               </button>
 
               <button
@@ -192,14 +182,14 @@ export const Navbar: React.FC = () => {
                   switchToDemo();
                   closeMenu();
                 }}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all border ${
+                className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-lg text-xs font-bold transition-all border min-h-11 ${
                   walletMode === "demo"
-                    ? "bg-[rgba(245,158,11,0.1)] border-amber-500/20 text-amber-400 opacity-60"
+                    ? "bg-amber-500/10 border-amber-500/25 text-amber-400 opacity-70"
                     : "bg-black/30 border-[var(--border-color)] text-[var(--color-text-secondary)] hover:text-white"
                 }`}
               >
-                <Coins size={12} />
-                <span>Demo Sandbox</span>
+                <Coins size={13} />
+                Demo
               </button>
             </div>
           </div>
