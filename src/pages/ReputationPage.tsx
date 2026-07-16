@@ -13,12 +13,6 @@ export const ReputationPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [prevAddress, setPrevAddress] = useState(address);
-  if (address !== prevAddress) {
-    setPrevAddress(address);
-    setSearchAddr(address || "");
-  }
-
   const fetchReputation = async (targetAddr: string) => {
     if (!targetAddr.trim()) return;
     setLoading(true);
@@ -37,7 +31,7 @@ export const ReputationPage: React.FC = () => {
 
   useEffect(() => {
     if (address) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchAddr(address);
       fetchReputation(address);
     }
   }, [address]);

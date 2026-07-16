@@ -25,7 +25,7 @@ export const HomePage: React.FC = () => {
                 status: agreement.status,
                 pool: agreement.pool,
               };
-            } catch {
+            } catch (err) {
               return {
                 ...item,
                 status: "Unknown",

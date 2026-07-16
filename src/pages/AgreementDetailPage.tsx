@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   FileText, Upload, Scale, AlertTriangle, 
@@ -38,13 +38,7 @@ export const AgreementDetailPage: React.FC = () => {
   const [evidenceText, setEvidenceText] = useState("");
   const [evidenceCategory, setEvidenceCategory] = useState("income");
 
-  const [prevKey, setPrevKey] = useState({ id, account });
-  if (id !== prevKey.id || account !== prevKey.account) {
-    setPrevKey({ id, account });
-    setLoading(true);
-  }
-
-  const fetchDetails = useCallback(async () => {
+  const fetchDetails = async () => {
     if (!id) return;
     try {
       const res = await getAgreement(id);
@@ -72,12 +66,12 @@ export const AgreementDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, account]);
+  };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
     fetchDetails();
-  }, [fetchDetails]);
+  }, [id, account]);
 
   // Actions
   const handleInitiateDissolution = async () => {
