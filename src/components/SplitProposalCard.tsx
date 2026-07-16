@@ -69,7 +69,7 @@ export const SplitProposalCard: React.FC<SplitProposalCardProps> = ({
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-2xl font-heading font-extrabold text-white">
               {proposal.proposed_split_a}:{proposal.proposed_split_b}
             </span>

@@ -28,10 +28,10 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
   return (
     <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 w-full py-4">
       {/* Connector lines behind steps (hidden on mobile, inline vertical lines used instead) */}
-      <div className="absolute top-[26px] left-8 right-8 h-0.5 bg-[var(--border-color)] z-0 hidden md:block" />
+      <div className="absolute top-[38px] left-[10%] right-[10%] h-0.5 bg-[var(--border-color)] z-0 hidden md:block" />
       <div 
-        className="absolute top-[26px] left-8 h-0.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] z-0 hidden md:block transition-all duration-500" 
-        style={{ width: `${(currentIndex / (steps.length - 1)) * 90}%` }}
+        className="absolute top-[38px] left-[10%] h-0.5 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] z-0 hidden md:block transition-all duration-500" 
+        style={{ width: `${(currentIndex / (steps.length - 1)) * 80}%` }}
       />
 
       {steps.map((step, idx) => {

@@ -1,20 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Heart, Scale, Wallet, Coins } from "lucide-react";
+import { Heart, Scale, Wallet, Coins, Menu, X } from "lucide-react";
 import { useWallet } from "../lib/walletContext";
 
 export const Navbar: React.FC = () => {
   const { account, walletMode, balance, connectMetaMask, switchToDemo } = useWallet();
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const closeMenu = () => setIsOpen(false);
+
+  const navLinks = [
+    { path: "/create", label: "Create Prenup" },
+    { path: "/join", label: "Join Partner" },
+    { path: "/demo", label: "Interactive Demos" },
+    { path: "/treasury", label: "Treasury" },
+    { path: "/ethics", label: "Ethics & Safety" },
+  ];
 
   return (
     <nav className="border-b border-[var(--border-color)] bg-[var(--bg-secondary)] backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          
+          {/* Logo and Brand */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2 group">
+            <Link to="/" onClick={closeMenu} className="flex items-center gap-2 group">
               <div className="relative">
                 <Scale className="h-7 w-7 text-[var(--accent-purple)] group-hover:scale-110 transition-transform" />
                 <Heart className="h-4.5 w-4.5 text-[var(--accent-pink)] absolute -bottom-1 -right-1 group-hover:scale-125 transition-transform fill-[var(--accent-pink)]" />
@@ -29,62 +42,26 @@ export const Navbar: React.FC = () => {
               </div>
             </Link>
 
+            {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center gap-1">
-              <Link
-                to="/create"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/create")
-                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
-                    : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
-                }`}
-              >
-                Create Prenup
-              </Link>
-              <Link
-                to="/join"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/join")
-                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
-                    : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
-                }`}
-              >
-                Join Partner
-              </Link>
-              <Link
-                to="/demo"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/demo")
-                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
-                    : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
-                }`}
-              >
-                Interactive Demos
-              </Link>
-              <Link
-                to="/treasury"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/treasury")
-                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
-                    : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
-                }`}
-              >
-                Treasury
-              </Link>
-              <Link
-                to="/ethics"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/ethics")
-                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
-                    : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
-                }`}
-              >
-                Ethics & Safety
-              </Link>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(link.path)
+                      ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
+                      : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Wallet Info / Mode Selector */}
+          {/* Desktop Right Side: Wallet details */}
+          <div className="hidden md:flex items-center gap-3">
             <div className="flex items-center gap-2 bg-[rgba(27,8,14,0.4)] border border-[var(--border-color)] rounded-xl p-1.5 pl-3">
               <div className="flex flex-col items-end hidden lg:flex">
                 <span className="text-[11px] text-[var(--color-text-muted)] font-semibold uppercase">
@@ -129,8 +106,105 @@ export const Navbar: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Mobile Right Side: Compact Connection Status & Hamburger Icon */}
+          <div className="flex items-center gap-3 md:hidden">
+            {account && (
+              <div className="flex items-center gap-1 bg-black/40 px-2.5 py-1 rounded-lg border border-[var(--border-color)]">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    walletMode === "demo" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                  }`}
+                />
+                <span className="text-[10px] font-mono text-[var(--color-text-secondary)]">
+                  {account.substring(0, 4)}...{account.substring(account.length - 4)}
+                </span>
+              </div>
+            )}
+            
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-white hover:bg-white/5 transition-colors focus:outline-none"
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+
         </div>
       </div>
+
+      {/* Mobile Drawer Dropdown Menu */}
+      {isOpen && (
+        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-secondary)]/95 backdrop-blur-lg px-4 py-4 flex flex-col gap-4 animate-fade-in">
+          {/* Navigation Links */}
+          <div className="flex flex-col gap-1.5">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={closeMenu}
+                className={`w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isActive(link.path)
+                    ? "bg-[rgba(183,110,121,0.15)] text-[var(--accent-purple)]"
+                    : "text-[var(--color-text-secondary)] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Wallet management panel in Drawer */}
+          <div className="border-t border-[var(--border-color)]/50 pt-4 flex flex-col gap-3">
+            <div className="flex justify-between items-center px-3 text-xs">
+              <span className="text-[var(--color-text-muted)] font-semibold">Wallet Balance</span>
+              <span className="text-white font-bold">{balance}</span>
+            </div>
+            
+            <div className="flex justify-between items-center px-3 text-xs">
+              <span className="text-[var(--color-text-muted)] font-semibold">Security Mode</span>
+              <span className={`font-bold ${walletMode === "demo" ? "text-amber-400" : "text-emerald-400"}`}>
+                {walletMode === "demo" ? "Sandbox Account" : "MetaMask Mode"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <button
+                disabled={walletMode === "metamask"}
+                onClick={() => {
+                  connectMetaMask().catch((e) => alert(e?.message || String(e)));
+                  closeMenu();
+                }}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all border ${
+                  walletMode === "metamask"
+                    ? "bg-[rgba(16,185,129,0.1)] border-emerald-500/20 text-emerald-400 opacity-60"
+                    : "bg-black/30 border-[var(--border-color)] text-[var(--color-text-secondary)] hover:text-white"
+                }`}
+              >
+                <Wallet size={12} />
+                <span>MetaMask</span>
+              </button>
+
+              <button
+                disabled={walletMode === "demo"}
+                onClick={() => {
+                  switchToDemo();
+                  closeMenu();
+                }}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all border ${
+                  walletMode === "demo"
+                    ? "bg-[rgba(245,158,11,0.1)] border-amber-500/20 text-amber-400 opacity-60"
+                    : "bg-black/30 border-[var(--border-color)] text-[var(--color-text-secondary)] hover:text-white"
+                }`}
+              >
+                <Coins size={12} />
+                <span>Demo Sandbox</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

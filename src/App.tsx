@@ -19,10 +19,10 @@ export default function App() {
   return (
     <Router>
       <WalletProvider>
-        <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--color-text-primary)] flex flex-col relative overflow-hidden font-body">
+        <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--color-text-primary)] flex flex-col relative overflow-x-hidden font-body">
           
           {/* Ambient Blob Background */}
-          <div className="bg-blobs absolute inset-0 pointer-events-none z-0">
+          <div className="bg-blobs pointer-events-none">
             <div className="blob blob-1 absolute rounded-full filter blur-[100px] opacity-15" />
             <div className="blob blob-2 absolute rounded-full filter blur-[100px] opacity-15" />
             <div className="blob blob-3 absolute rounded-full filter blur-[100px] opacity-10" />
@@ -33,7 +33,7 @@ export default function App() {
 
           {/* Global Toast Notifier */}
           <Toaster 
-            position="top-right" 
+            position="bottom-right" 
             toastOptions={{
               style: {
                 background: "var(--bg-secondary)",
