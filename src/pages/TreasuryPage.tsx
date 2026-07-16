@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Coins, Wallet, ShieldCheck, ArrowRight, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useWallet } from "../lib/walletContext";
@@ -15,7 +15,13 @@ export const TreasuryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const fetchWithdrawable = async () => {
+  const [prevAccount, setPrevAccount] = useState(account);
+  if (account !== prevAccount) {
+    setPrevAccount(account);
+    setLoading(true);
+  }
+
+  const fetchWithdrawable = useCallback(async () => {
     if (!account) return;
     try {
       const balance = await getWithdrawableBalance(account);
@@ -26,12 +32,12 @@ export const TreasuryPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [account]);
 
   useEffect(() => {
-    setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWithdrawable();
-  }, [account]);
+  }, [fetchWithdrawable]);
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
